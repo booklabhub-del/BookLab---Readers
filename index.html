@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dấu Chân Sách - BookLab Reader</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;600;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            booklab: {
+              warmBg: '#FFFDF7',
+              cream: '#FFF5E4',
+              yellowPastel: '#FFE494',
+              yellowDark: '#FFA800',
+              orangePastel: '#FFD1B3',
+              pinkPastel: '#FFD0D6',
+              mint: '#E8F5E9',
+              mintDark: '#4CAF50',
+              sky: '#E0F7FA',
+              skyDark: '#00BCD4',
+              navy: '#2C3E50',
+              purplePastel: '#E8EAF6',
+              purpleDark: '#3F51B5',
+              coral: '#FF6B6B'
+            },
+            level: {
+              l1: '#FFC107',
+              l2: '#00BCD4',
+              l3: '#3F51B5',
+              l4: '#4CAF50'
+            }
+          },
+          fontFamily: {
+            sans: ['Quicksand', 'sans-serif'],
+            display: ['Comfortaa', 'cursive']
+          },
+          boxShadow: {
+            sketch: '3px 4px 0px 0px #2C3E50',
+            sketchSm: '2px 2px 0px 0px #2C3E50',
+            sketchLg: '5px 6px 0px 0px #2C3E50',
+            glow: '0 0 15px rgba(255, 168, 0, 0.5)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #FFFDF7;
+      background-image: radial-gradient(#F3E9D2 1.5px, transparent 1.5px);
+      background-size: 24px 24px;
+      color: #2C3E50;
+      font-family: 'Quicksand', sans-serif;
+    }
+
+    .sketch-border {
+      border: 2.5px solid #2C3E50;
+      border-radius: 20px;
+    }
+
+    .sketch-btn {
+      border: 2.5px solid #2C3E50;
+      box-shadow: 3px 4px 0px 0px #2C3E50;
+      transition: all 0.15s ease;
+    }
+    .sketch-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 2px 0px 0px #2C3E50;
+    }
+
+    /* Đường nối dấu chân uốn lượn */
+    .footprint-path {
+      stroke-dasharray: 10, 10;
+      animation: dash 30s linear infinite;
+    }
+    @keyframes dash {
+      to {
+        stroke-dashoffset: -1000;
+      }
+    }
+
+    /* Footprint Paw Pulse */
+    .footprint-card {
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .footprint-card:hover {
+      transform: scale(1.06) rotate(-2deg);
+    }
+
+    /* Scrollbar tùy chỉnh */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #FFF5E4;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #FFA800;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body class="pb-24 pt-20 max-w-md mx-auto min-h-screen relative shadow-2xl border-x-2 border-navy">
+
+  <!-- ================= TOP BAR CỐ ĐỊNH ================= -->
+  <header class="fixed top-0 left-0 right-0 max-w-md mx-auto bg-booklab-cream border-b-4 border-navy z-40 px-4 py-2.5 flex items-center justify-between shadow-md">
+    <!-- User Avatar & Profile Summary -->
+    <div class="flex items-center space-x-3 cursor-pointer" onclick="openProfileModal()">
+      <div class="relative">
+        <img id="userAvatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=TungBun" alt="Avatar" class="w-11 h-11 rounded-full border-2 border-navy bg-white shadow-sketchSm">
+        <span id="levelBadge" class="absolute -bottom-1 -right-1 bg-level-l2 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-navy">L2</span>
+      </div>
+      <div>
+        <h3 id="userName" class="font-display font-bold text-sm text-navy leading-tight flex items-center">
+          Nguyễn Hoàng Tùng
+          <i class="fa-solid fa-pen text-xs ml-1.5 text-gray-400"></i>
+        </h3>
+        <p id="userLevelName" class="text-xs font-semibold text-sky-700">Level 2 - Builder 🛠️</p>
+      </div>
+    </div>
+
+    <!-- Right Action Icons -->
+    <div class="flex items-center space-x-2">
+      <!-- Digital QR Button -->
+      <button onclick="openQRModal()" class="w-9 h-9 bg-booklab-yellowPastel sketch-btn rounded-xl flex items-center justify-center text-navy font-bold hover:bg-booklab-yellowDark transition">
+        <i class="fa-solid fa-qrcode text-lg"></i>
+      </button>
+
+      <!-- Notifications -->
+      <button onclick="toggleNotifications()" class="relative w-9 h-9 bg-booklab-pinkPastel sketch-btn rounded-xl flex items-center justify-center text-navy font-bold">
+        <i class="fa-solid fa-bell text-lg"></i>
+        <span id="notifBadge" class="absolute -top-1 -right-1 bg-coral text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-navy">3</span>
+      </button>
+
+      <!-- Settings / Refresh -->
+      <button onclick="fetchSheetData()" class="w-9 h-9 bg-white sketch-btn rounded-xl flex items-center justify-center text-navy font-bold">
+        <i id="refreshIcon" class="fa-solid fa-rotate text-sm"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= NOTIFICATION DROPDOWN ================= -->
+  <div id="notifDropdown" class="hidden fixed top-16 right-4 max-w-xs w-80 bg-white sketch-border z-50 p-4 shadow-sketchLg animate-bounce-in">
+    <div class="flex justify-between items-center border-b-2 border-navy pb-2 mb-3">
+      <h4 class="font-display font-bold text-navy text-sm"><i class="fa-solid fa-bullhorn text-booklab-yellowDark mr-1"></i> Thông Báo Của Bạn</h4>
+      <button onclick="toggleNotifications()" class="text-xs text-gray-500 font-bold">Đóng ✕</button>
+    </div>
+    <div id="notifList" class="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+      <!-- Dynamically filled -->
+    </div>
+  </div>
+
+  <!-- ================= BANNER THẺ & VÍ THÙ LAO ================= -->
+  <section class="p-4 space-y-3">
+    <!-- Quick Ticket Tracker Card -->
+    <div class="bg-booklab-yellowPastel sketch-border p-3.5 shadow-sketch relative overflow-hidden">
+      <div class="flex justify-between items-start mb-1.5">
+        <div>
+          <span class="bg-white text-navy font-bold text-[10px] uppercase px-2 py-0.5 rounded-full border border-navy shadow-sketchSm">
+            <i class="fa-solid fa-ticket text-booklab-yellowDark mr-1"></i> Reading Tour T1
+          </span>
+          <h4 class="font-display font-bold text-sm text-navy mt-1">Thẻ 10 Buổi Đọc Sách Trạm</h4>
+        </div>
+        <span id="ticketStatusBadge" class="bg-mintDark text-white text-xs font-bold px-2 py-0.5 rounded-lg border border-navy">Active</span>
+      </div>
+
+      <!-- Dots Tracker -->
+      <div class="flex items-center justify-between my-2 bg-white/70 p-2 rounded-xl border border-navy/30" id="ticketDots">
+        <!-- Render 10 circles (Green check for used, Gray for remaining) -->
+      </div>
+      <p id="ticketRemainText" class="text-xs font-semibold text-navy flex justify-between">
+        <span>Đã dùng: <strong>6 buổi</strong></span>
+        <span class="text-coral">Còn lại: <strong>4/10 buổi</strong> ⏳</span>
+      </p>
+    </div>
+
+    <!-- Ví Thù Lao Độc Giả -->
+    <div class="bg-booklab-sky sketch-border p-3.5 shadow-sketch flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-11 h-11 bg-booklab-yellowDark rounded-2xl sketch-border flex items-center justify-center text-white text-xl">
+          🪙
+        </div>
+        <div>
+          <p class="text-xs font-bold text-gray-600 uppercase tracking-wide">Ví Thù Lao Đọc Sách</p>
+          <h3 id="bcoinText" class="font-display font-extrabold text-lg text-navy leading-none">
+            3,501 <span class="text-xs font-bold">Bcoins</span>
+          </h3>
+          <p id="vnđText" class="text-xs font-bold text-sky-700 mt-0.5">≈ 35,010 VNĐ <span class="text-[10px] text-gray-500 font-normal">(1 Bcoin = 10đ)</span></p>
+        </div>
+      </div>
+      <button onclick="switchTab('tab5')" class="bg-white sketch-btn text-xs font-bold px-3 py-2 text-navy hover:bg-booklab-yellowPastel">
+        Đổi Quà 🎁
+      </button>
+    </div>
+  </section>
+
+  <!-- ================= TABS MAIN CONTENT CONTAINER ================= -->
+  <main class="px-4 pb-4">
+
+    <!-- TAB 1: LỘ TRÌNH ĐỌC SÁCH (DẤU CHÂN SÁCH PATH) -->
+    <div id="tab1" class="tab-content space-y-4">
+      <div class="bg-booklab-cream sketch-border p-4 text-center shadow-sketch relative">
+        <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-booklab-yellowDark text-white font-bold text-xs px-3 py-0.5 rounded-full border border-navy">
+          🐾 BẢN ĐỒ DẤU CHÂN SÁCH
+        </span>
+        <p class="text-xs text-navy font-medium mt-1">
+          Chinh phục các Camp đọc sách để mở khóa bìa sách & tích lũy Bcoins thù lao!
+        </p>
+      </div>
+
+      <!-- Footprint Route Canvas Container -->
+      <div class="relative min-h-[580px] bg-white sketch-border p-4 shadow-sketch overflow-hidden flex flex-col justify-between">
+
+        <!-- SVG Path Line Connecting Footprints -->
+        <svg class="absolute inset-0 w-full h-full pointer-events-none z-0" viewBox="0 0 360 560" fill="none">
+          <path class="footprint-path" d="M 80 70 C 260 110, 280 170, 270 200 C 250 240, 90 250, 80 320 C 70 380, 280 390, 270 460 C 260 500, 150 510, 90 530" stroke="#FFA800" stroke-width="5" stroke-linecap="round"/>
+        </svg>
+
+        <!-- Dynamic Footprint Camp Nodes -->
+        <div id="campNodesContainer" class="relative z-10 space-y-6">
+          <!-- Footprints dynamically populated by JS -->
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 2: CHECK-IN & VÉ -->
+    <div id="tab2" class="tab-content hidden space-y-4">
+      <div class="bg-white sketch-border p-5 text-center shadow-sketch space-y-4">
+        <h3 class="font-display font-bold text-base text-navy">
+          <i class="fa-solid fa-qrcode text-booklab-yellowDark mr-2"></i>Mã Check-in Độc Giả Tại Trạm
+        </h3>
+        
+        <!-- Large Digital QR -->
+        <div class="p-3 bg-booklab-cream inline-block sketch-border shadow-sketchSm">
+          <img id="digitalQRImage" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=NHT-972316411" alt="Digital Token QR" class="w-44 h-44 mx-auto rounded-lg">
+          <p id="qrTokenCode" class="font-mono text-xs font-bold text-navy mt-2">QR_Token: NHT-972316411</p>
+        </div>
+
+        <p class="text-xs text-gray-600 font-medium">
+          Reader mang điện thoại hoặc mở ứng dụng này để Thủ thư tại Trạm đọc quét mã check-in trừ số buổi vé.
+        </p>
+
+        <!-- Printable Passport Card Action -->
+        <div class="border-t-2 border-dashed border-navy/30 pt-4 text-left">
+          <div class="flex justify-between items-center bg-booklab-pinkPastel p-3 rounded-xl border border-navy">
+            <div>
+              <h4 class="font-bold text-xs text-navy"><i class="fa-solid fa-passport mr-1"></i> Passport Sổ Giấy</h4>
+              <p class="text-[11px] text-gray-700">Tải tem QR chuẩn (5x5cm) dán bìa sổ giấy</p>
+            </div>
+            <button onclick="printPassportQR()" class="bg-white sketch-btn text-xs font-bold px-2.5 py-1.5 text-navy">
+              In Tem 🖨️
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lịch sử Check-in -->
+      <div class="bg-white sketch-border p-4 shadow-sketch">
+        <h4 class="font-display font-bold text-sm text-navy mb-3"><i class="fa-solid fa-history mr-1 text-sky-600"></i> Lịch Sử Lượt Đến Trạm</h4>
+        <div id="checkinHistory" class="space-y-2 max-h-48 overflow-y-auto pr-1 text-xs">
+          <!-- Populated -->
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: GAME TEST 5 PHÚT -->
+    <div id="tab3" class="tab-content hidden space-y-4">
+      <div id="gameTestStateContainer">
+        <!-- Rendered based on whether user has done test or first time -->
+      </div>
+    </div>
+
+    <!-- TAB 4: BẢNG XẾP HẠNG -->
+    <div id="tab4" class="tab-content hidden space-y-4">
+      <div class="bg-booklab-yellowPastel sketch-border p-4 text-center shadow-sketch">
+        <h3 class="font-display font-bold text-base text-navy">🏆 BẢNG XẾP HẠNG ĐỘC GIẢ</h3>
+        <p class="text-xs text-navy font-semibold">Vinh danh các nhà thám hiểm tích cực nhất BookLab!</p>
+      </div>
+
+      <!-- Top 3 Podium -->
+      <div class="bg-white sketch-border p-4 shadow-sketch space-y-3">
+        <div id="leaderboardList" class="space-y-2">
+          <!-- Dynamically filled -->
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: ĐỔI QUÀ & THÙ LAO -->
+    <div id="tab5" class="tab-content hidden space-y-4">
+      <div class="bg-booklab-mint sketch-border p-3.5 shadow-sketch flex justify-between items-center">
+        <div>
+          <p class="text-xs font-bold text-gray-600">Số dư quà tặng hiện tại:</p>
+          <h4 id="giftBalanceText" class="font-display font-bold text-base text-navy">3,501 Bcoins</h4>
+        </div>
+        <span class="text-2xl">🎁</span>
+      </div>
+
+      <!-- Catalog quà tặng (G1-G7) -->
+      <div id="giftCatalog" class="grid grid-cols-2 gap-3">
+        <!-- Dynamically filled -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ================= BOTTOM NAVIGATION BAR (5 TABS) ================= -->
+  <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-booklab-cream border-t-4 border-navy z-40 px-2 py-1.5 flex justify-around shadow-lg">
+    <button onclick="switchTab('tab1')" id="nav-tab1" class="flex flex-col items-center justify-center w-16 py-1 rounded-xl text-navy font-bold text-[10px] bg-booklab-yellowPastel border-2 border-navy shadow-sketchSm">
+      <i class="fa-solid fa-map-location-dot text-base mb-0.5"></i>
+      Lộ Trình
+    </button>
+    <button onclick="switchTab('tab2')" id="nav-tab2" class="flex flex-col items-center justify-center w-16 py-1 rounded-xl text-navy font-bold text-[10px]">
+      <i class="fa-solid fa-ticket text-base mb-0.5"></i>
+      Check-in
+    </button>
+    <button onclick="switchTab('tab3')" id="nav-tab3" class="flex flex-col items-center justify-center w-16 py-1 rounded-xl text-navy font-bold text-[10px]">
+      <i class="fa-solid fa-gamepad text-base mb-0.5"></i>
+      Game Test
+    </button>
+    <button onclick="switchTab('tab4')" id="nav-tab4" class="flex flex-col items-center justify-center w-16 py-1 rounded-xl text-navy font-bold text-[10px]">
+      <i class="fa-solid fa-trophy text-base mb-0.5"></i>
+      BXH
+    </button>
+    <button onclick="switchTab('tab5')" id="nav-tab5" class="flex flex-col items-center justify-center w-16 py-1 rounded-xl text-navy font-bold text-[10px]">
+      <i class="fa-solid fa-gift text-base mb-0.5"></i>
+      Đổi Quà
+    </button>
+  </nav>
+
+  <!-- ================= MODAL GALLERY SÁCH TRONG CAMP ================= -->
+  <div id="booksModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white sketch-border w-full max-w-sm p-4 shadow-sketchLg space-y-4 max-h-[85vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b-2 border-navy pb-2">
+        <h3 id="modalCampTitle" class="font-display font-bold text-navy text-sm">Sách Trong Camp</h3>
+        <button onclick="closeBooksModal()" class="text-sm font-bold text-gray-500">✕</button>
+      </div>
+      <div id="modalBooksList" class="grid grid-cols-2 gap-3">
+        <!-- Dynamically rendered -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL PROFILE & EDIT ================= -->
+  <div id="profileModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white sketch-border w-full max-w-sm p-4 shadow-sketchLg space-y-4">
+      <div class="flex justify-between items-center border-b-2 border-navy pb-2">
+        <h3 class="font-display font-bold text-navy text-sm">Hồ Sơ Độc Giả</h3>
+        <button onclick="closeProfileModal()" class="text-sm font-bold text-gray-500">✕</button>
+      </div>
+
+      <div class="text-center space-y-2">
+        <img id="profileModalAvatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=TungBun" class="w-16 h-16 mx-auto rounded-full border-2 border-navy">
+        <h4 id="profileModalName" class="font-bold text-navy">Nguyễn Hoàng Tùng</h4>
+        <p id="profileModalID" class="text-xs font-mono text-gray-500">User_ID: NHT-972316411</p>
+      </div>
+
+      <div class="space-y-2 text-xs">
+        <div class="flex justify-between border-b pb-1">
+          <span class="text-gray-500">Trường học:</span>
+          <span class="font-bold text-navy">Tiểu học Cao Bá Quát</span>
+        </div>
+        <div class="flex justify-between border-b pb-1">
+          <span class="text-gray-500">Khu vực Trạm:</span>
+          <span class="font-bold text-navy">Đặng Xá, Gia Lâm, HN</span>
+        </div>
+        <div class="flex justify-between border-b pb-1">
+          <span class="text-gray-500">Số dư Bcoins:</span>
+          <span class="font-bold text-booklab-yellowDark">3,501 Bcoins</span>
+        </div>
+        <div class="flex justify-between border-b pb-1">
+          <span class="text-gray-500">Ví thù lao quy đổi:</span>
+          <span class="font-bold text-sky-600">35,010 VNĐ</span>
+        </div>
+      </div>
+
+      <button onclick="closeProfileModal()" class="w-full bg-booklab-yellowPastel sketch-btn py-2 text-xs font-bold text-navy">
+        Đóng
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= JAVASCRIPT APP LOGIC ================= -->
+  <script>
+    // URL Web App Google Apps Script API đã cung cấp
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbygkraZjvpkKh1-EzZCWosIjrsRTeB5r0ogYyh3yoQJiyQ3XGjWP63nWzQi1s6yUF7r/exec";
+
+    // State ứng dụng
+    let appData = {
+      user: {
+        User_ID: "NHT-972316411",
+        Full_Name: "Nguyễn Hoàng Tùng",
+        Current_Level: "L2",
+        Level_Name: "Builder",
+        Total_Bcoins: 3501,
+        School: "Tiểu học Cao Bá Quát",
+        Area: "Đặng Xá, Gia Lâm, HN"
+      },
+      tickets: [
+        { Total_Session: 10, Remains: 4, Status: "Active", Package_Name: "Thẻ 10 buổi Reading Tour" }
+      ],
+      camps: [
+        { ID_Camp: "C1", Title: "Việt Nam Đất nước tôi", Sequence_Order: 1, Level: "Explorer", Number_of_Books: 2, Status: "completed" },
+        { ID_Camp: "C2", Title: "Vòng quanh Việt Nam", Sequence_Order: 2, Level: "Explorer", Number_of_Books: 3, Status: "completed" },
+        { ID_Camp: "C6", Title: "Mặt trời không lặn ở nước Anh", Sequence_Order: 3, Level: "Builder", Number_of_Books: 3, Status: "active", Progress: 66 },
+        { ID_Camp: "C4", Title: "Văn minh thế giới cổ đại", Sequence_Order: 4, Level: "Tracker", Number_of_Books: 4, Status: "locked" },
+        { ID_Camp: "C3", Title: "Mật mã chiến binh", Sequence_Order: 5, Level: "Tracker", Number_of_Books: 4, Status: "locked" },
+        { ID_Camp: "C5", Title: "Giao chỉ anh hùng", Sequence_Order: 6, Level: "Researcher", Number_of_Books: 4, Status: "locked" }
+      ],
+      books: [
+        { ID_Book: "B1", Title: "Vòng quanh thế giới - VIỆT NAM", ID_Camp: "C1", Read: true },
+        { ID_Book: "B2", Title: "Kể chuyện Bác Hồ", ID_Camp: "C1", Read: true },
+        { ID_Book: "B11", Title: "Vòng quanh thế giới - Anh", ID_Camp: "C6", Read: true },
+        { ID_Book: "B17", Title: "Victoria - Đế chế khổng lồ", ID_Camp: "C6", Read: true },
+        { ID_Book: "B12", Title: "Cách mạng công nghiệp", ID_Camp: "C6", Read: false },
+        { ID_Book: "B3", Title: "Nền văn minh Lưỡng Hà", ID_Camp: "C4", Read: false },
+        { ID_Book: "B4", Title: "Athens & Sparta", ID_Camp: "C4", Read: false }
+      ],
+      testLogs: [
+        { Total_Score: 90, Result_Level: "L4", Date: "2026-11-10" }
+      ],
+      notifications: [
+        { Title: "Cộng điểm thù lao", Content: "Bạn vừa nhận +100 Bcoins từ thử thách đọc sách! Ví của bạn đã tăng rồi đấy!", Is_Read: false },
+        { Title: "Cảnh báo hạn thẻ", Content: "Thẻ 10 buổi Reading Tour của bạn chỉ còn lại 4 buổi nữa thôi!", Is_Read: false },
+        { Title: "Cột mốc quà tặng", Content: "Bạn đã đủ Bcoins đổi quà Sổ học từ vựng Crabit! Ghé Trạm nhận nhé!", Is_Read: true }
+      ],
+      gifts: [
+        { ID_Gift: "G1", Title: "Gôm trượt", Bcoins: 1000, Status: "claimed" },
+        { ID_Gift: "G2", Title: "Tập giấy Flashcard", Bcoins: 1500, Status: "available" },
+        { ID_Gift: "G3", Title: "Sổ học từ vựng Crabit", Bcoins: 3000, Status: "available" },
+        { ID_Gift: "G4", Title: "Vở kẻ ngang KLong", Bcoins: 2500, Status: "available" },
+        { ID_Gift: "G5", Title: "Vở vẽ sáng tạo", Bcoins: 3500, Status: "available" },
+        { ID_Gift: "G7", Title: "Máy gọt bút chì Deli", Bcoins: 4000, Status: "locked" }
+      ]
+    };
+
+    // Khởi tạo app khi load trang
+    document.addEventListener("DOMContentLoaded", () => {
+      renderHeaderAndTicketInfo();
+      renderFootprintRoute();
+      renderTicketDots();
+      renderNotifications();
+      renderGameTestTab();
+      renderLeaderboard();
+      renderGiftCatalog();
+      renderCheckinHistory();
+
+      // Thử gọi API Google Apps Script để cập nhật dữ liệu real-time
+      fetchSheetData();
+    });
+
+    // 1. CHUYỂN TAB ĐIỀU HƯỚNG
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
+      document.getElementById(tabId).classList.remove("hidden");
+
+      // Update Nav Buttons Style
+      for (let i = 1; i <= 5; i++) {
+        const btn = document.getElementById(`nav-tab${i}`);
+        if (`tab${i}` === tabId) {
+          btn.className = "flex flex-col items-center justify-center w-16 py-1 rounded-xl text-navy font-bold text-[10px] bg-booklab-yellowPastel border-2 border-navy shadow-sketchSm";
+        } else {
+          btn.className = "flex flex-col items-center justify-center w-16 py-1 rounded-xl text-navy font-bold text-[10px]";
+        }
+      }
+    }
+
+    // 2. RENDER HEADER & TICKET
+    function renderHeaderAndTicketInfo() {
+      const bcoins = appData.user.Total_Bcoins || 3501;
+      const vnd = bcoins * 10;
+
+      document.getElementById("userName").childNodes[0].nodeValue = appData.user.Full_Name + " ";
+      document.getElementById("userLevelName").innerText = `Level ${appData.user.Current_Level?.replace('L','')} - ${appData.user.Level_Name}`;
+      document.getElementById("levelBadge").innerText = appData.user.Current_Level || "L2";
+      document.getElementById("bcoinText").innerHTML = `${bcoins.toLocaleString()} <span class="text-xs font-bold">Bcoins</span>`;
+      document.getElementById("vnđText").innerHTML = `≈ ${vnd.toLocaleString()} VNĐ <span class="text-[10px] text-gray-500 font-normal">(1 Bcoin = 10đ)</span>`;
+      document.getElementById("giftBalanceText").innerText = `${bcoins.toLocaleString()} Bcoins`;
+    }
+
+    // 3. RENDER THẺ VÉ BUỔI ĐỌC (DOTS)
+    function renderTicketDots() {
+      const activeTicket = appData.tickets[0] || { Total_Session: 10, Remains: 4 };
+      const total = activeTicket.Total_Session || 10;
+      const remain = activeTicket.Remains || 4;
+      const used = total - remain;
+
+      const dotsContainer = document.getElementById("ticketDots");
+      dotsContainer.innerHTML = "";
+
+      for (let i = 0; i < total; i++) {
+        const dot = document.createElement("div");
+        if (i < used) {
+          // Buổi đã dùng -> Icon tick xanh
+          dot.className = "w-6 h-6 rounded-full bg-mintDark border border-navy flex items-center justify-center text-white text-[10px] font-bold shadow-sketchSm";
+          dot.innerHTML = '<i class="fa-solid fa-check"></i>';
+        } else {
+          // Buổi còn lại -> Ô tròn màu xám
+          dot.className = "w-6 h-6 rounded-full bg-gray-200 border border-navy/40 flex items-center justify-center text-gray-400 text-[10px] font-bold";
+          dot.innerText = i + 1;
+        }
+        dotsContainer.appendChild(dot);
+      }
+
+      document.getElementById("ticketRemainText").innerHTML = `
+        <span>Đã dùng: <strong>${used} buổi</strong></span>
+        <span class="${remain <= 2 ? 'text-coral animate-pulse' : 'text-navy'}">Còn lại: <strong>${remain}/${total} buổi</strong> ⏳</span>
+      `;
+    }
+
+    // 4. RENDER BẢN ĐỒ DẤU CHÂN SÁCH (TAB 1)
+    function renderFootprintRoute() {
+      const container = document.getElementById("campNodesContainer");
+      container.innerHTML = "";
+
+      // Vị trí căn lề zigzag giả lập các dấu chân uốn lượn
+      const aligns = ["justify-start pl-4", "justify-end pr-4", "justify-center", "justify-start pl-6", "justify-end pr-6", "justify-center"];
+
+      appData.camps.forEach((camp, index) => {
+        const alignClass = aligns[index % aligns.length];
+        
+        let statusBadge = "";
+        let bgStyle = "";
+        let footIcon = "🐾";
+        
+        if (camp.Status === "completed") {
+          statusBadge = `<span class="bg-mintDark text-white text-[10px] font-bold px-2 py-0.5 rounded-full border border-navy">Hoàn thành ✓</span>`;
+          bgStyle = "bg-booklab-yellowPastel border-navy shadow-sketch";
+          footIcon = "🐾";
+        } else if (camp.Status === "active") {
+          statusBadge = `<span class="bg-booklab-skyDark text-white text-[10px] font-bold px-2 py-0.5 rounded-full border border-navy animate-pulse">Đang đọc ${camp.Progress || 50}%</span>`;
+          bgStyle = "bg-booklab-sky border-navy shadow-sketchLg scale-105";
+          footIcon = "👣";
+        } else {
+          statusBadge = `<span class="bg-gray-300 text-gray-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-navy">🔒 Chưa mở</span>`;
+          bgStyle = "bg-gray-100 border-gray-400 opacity-75 grayscale";
+          footIcon = "🔒";
+        }
+
+        const nodeHTML = `
+          <div class="flex ${alignClass}">
+            <div onclick="openCampBooks('${camp.ID_Camp}', '${camp.Title}')" class="footprint-card cursor-pointer ${bgStyle} sketch-border p-3 w-56 rounded-3xl relative">
+              <div class="flex items-center space-x-2.5">
+                <div class="w-10 h-10 rounded-2xl bg-white sketch-border flex items-center justify-center text-xl shadow-sketchSm">
+                  ${footIcon}
+                </div>
+                <div>
+                  <span class="text-[10px] font-bold text-gray-500 uppercase">Camp C${camp.Sequence_Order}</span>
+                  <h4 class="font-display font-bold text-xs text-navy leading-tight">${camp.Title}</h4>
+                </div>
+              </div>
+              <div class="mt-2 flex justify-between items-center">
+                <span class="text-[10px] font-semibold text-gray-600">${camp.Number_of_Books || 3} cuốn sách</span>
+                ${statusBadge}
+              </div>
+            </div>
+          </div>
+        `;
+        container.innerHTML += nodeHTML;
+      });
+    }
+
+    // 5. MỞ MODAL GALLERY SÁCH TRONG CAMP
+    function openCampBooks(campId, campTitle) {
+      document.getElementById("modalCampTitle").innerText = `Camp: ${campTitle}`;
+      const listContainer = document.getElementById("modalBooksList");
+      listContainer.innerHTML = "";
+
+      const filteredBooks = appData.books.filter(b => b.ID_Camp === campId);
+
+      if (filteredBooks.length === 0) {
+        listContainer.innerHTML = `<p class="text-xs text-gray-500 col-span-2 text-center py-4">Chưa có thông tin sách cho Camp này.</p>`;
+      } else {
+        filteredBooks.forEach(book => {
+          const isRead = book.Read;
+          const bookCard = `
+            <div class="sketch-border p-2.5 text-center ${isRead ? 'bg-booklab-mint' : 'bg-gray-100 grayscale opacity-80'} rounded-2xl shadow-sketchSm">
+              <div class="w-12 h-16 bg-booklab-yellowDark mx-auto rounded-lg sketch-border flex items-center justify-center text-white text-xl mb-1.5 shadow-sketchSm">
+                📖
+              </div>
+              <h5 class="font-bold text-xs text-navy line-clamp-2">${book.Title}</h5>
+              <span class="inline-block mt-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${isRead ? 'bg-mintDark text-white' : 'bg-gray-300 text-gray-700'}">
+                ${isRead ? 'Đã đọc ✓' : 'Chưa chinh phục'}
+              </span>
+            </div>
+          `;
+          listContainer.innerHTML += bookCard;
+        });
+      }
+
+      document.getElementById("booksModal").classList.remove("hidden");
+    }
+
+    function closeBooksModal() {
+      document.getElementById("booksModal").classList.add("hidden");
+    }
+
+    // 6. RENDER GAME TEST TAB 3
+    function renderGameTestTab() {
+      const container = document.getElementById("gameTestStateContainer");
+      const hasTest = appData.testLogs && appData.testLogs.length > 0;
+
+      if (!hasTest) {
+        // Lần đầu tiên chưa làm test
+        container.innerHTML = `
+          <div class="bg-white sketch-border p-5 text-center shadow-sketch space-y-4">
+            <div class="w-16 h-16 bg-booklab-yellowPastel rounded-full sketch-border mx-auto flex items-center justify-center text-3xl">
+              🎮
+            </div>
+            <h3 class="font-display font-bold text-base text-navy">THỬ THÁCH GAME TEST 5 PHÚT</h3>
+            <p class="text-xs text-gray-600">
+              Khảo sát năng lực tập trung, tốc độ đọc hiểu & khả năng kiềm chế bốc đồng qua 3 vòng chơi hấp dẫn!
+            </p>
+            <button onclick="startMiniGameTest()" class="w-full bg-booklab-yellowDark sketch-btn py-3 text-sm font-bold text-white shadow-sketch">
+              🚀 BẮT ĐẦU LÀM BÀI TEST
+            </button>
+          </div>
+        `;
+      } else {
+        // Đã từng làm test -> Hiển thị kết quả & Nút làm lại
+        const lastTest = appData.testLogs[0];
+        container.innerHTML = `
+          <div class="bg-white sketch-border p-4 shadow-sketch space-y-4">
+            <div class="flex justify-between items-center border-b pb-2">
+              <h3 class="font-display font-bold text-sm text-navy">Kết Quả Game Test Gần Nhất</h3>
+              <span class="text-xs font-semibold text-gray-500">${lastTest.Date || '2026-11-10'}</span>
+            </div>
+
+            <!-- Score Summary Card -->
+            <div class="bg-booklab-sky p-3 rounded-2xl border border-navy flex justify-between items-center">
+              <div>
+                <p class="text-xs font-bold text-gray-600">Điểm tổng hợp:</p>
+                <h2 class="font-display font-extrabold text-2xl text-navy">${lastTest.Total_Score || 90}/100</h2>
+              </div>
+              <div class="text-right">
+                <span class="bg-level-l4 text-white font-bold text-xs px-2.5 py-1 rounded-full border border-navy">
+                  Cấp độ: ${lastTest.Result_Level || 'L4'}
+                </span>
+                <p class="text-[11px] font-bold text-sky-700 mt-1">Master - Tự chủ 🌟</p>
+              </div>
+            </div>
+
+            <!-- Spectrum 4 Levels Bar -->
+            <div class="space-y-1">
+              <p class="text-xs font-bold text-navy">Dải Quang Phổ 4 Level Năng Lực:</p>
+              <div class="grid grid-cols-4 gap-1 text-[10px] font-bold text-center text-white">
+                <div class="bg-level-l1 p-1 rounded border border-navy">L1 (0-45)</div>
+                <div class="bg-level-l2 p-1 rounded border border-navy">L2 (46-65)</div>
+                <div class="bg-level-l3 p-1 rounded border border-navy">L3 (66-85)</div>
+                <div class="bg-level-l4 p-1 rounded border border-navy ring-2 ring-navy scale-105">L4 (86-100)</div>
+              </div>
+            </div>
+
+            <button onclick="startMiniGameTest()" class="w-full bg-booklab-yellowPastel sketch-btn py-2.5 text-xs font-bold text-navy">
+              🔄 LÀM TEST LẠI (5 Phút)
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    // Mô phỏng gửi kết quả bài Test lên Google Sheet qua POST API
+    function startMiniGameTest() {
+      alert("Đang khởi tạo thử thách 3 vòng Game Test (5 Phút)...");
+      
+      const simulatedTestPayload = {
+        sheet: "TEST_LOGS",
+        data: {
+          Test_ID: "TST_" + Date.now(),
+          Date: new Date().toISOString().replace('T', ' ').substring(0, 19),
+          ID_User: appData.user.User_ID || "NHT-972316411",
+          Test_Type: "Progress_Test",
+          ID_Camp: "C4",
+          Turn1_Hits: 15,
+          Turn1_FalseAlarms: 1,
+          Turn1_Score: 19,
+          Turn2_Correct_Count: 3,
+          Turn2_Score: 60,
+          Turn3_Pause_Count: 2,
+          Turn3_Score: 18,
+          Total_Score: 97,
+          Result_Level: "L4",
+          Awarded_Bcoins: 100
+        }
+      };
+
+      // Gửi dữ liệu tới Apps Script API
+      fetch(GAS_API_URL, {
+        method: "POST",
+        body: JSON.stringify(simulatedTestPayload)
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert("🎉 Chúc mừng bạn đã hoàn thành Game Test! Kết quả đã được lưu đồng bộ lên Google Sheet!");
+        appData.testLogs.unshift(simulatedTestPayload.data);
+        renderGameTestTab();
+      })
+      .catch(err => {
+        console.error("Lỗi POST API:", err);
+        alert("Đã hoàn thành lượt test demo!");
+      });
+    }
+
+    // 7. RENDER NOTIFICATIONS
+    function toggleNotifications() {
+      document.getElementById("notifDropdown").classList.toggle("hidden");
+    }
+
+    function renderNotifications() {
+      const container = document.getElementById("notifList");
+      container.innerHTML = "";
+
+      appData.notifications.forEach(n => {
+        const item = `
+          <div class="p-2 bg-booklab-cream rounded-xl border border-navy/30 text-xs">
+            <h5 class="font-bold text-navy">${n.Title}</h5>
+            <p class="text-gray-700 text-[11px] mt-0.5">${n.Content}</p>
+          </div>
+        `;
+        container.innerHTML += item;
+      });
+    }
+
+    // 8. RENDER LEADERBOARD (TAB 4)
+    function renderLeaderboard() {
+      const container = document.getElementById("leaderboardList");
+      const list = [
+        { rank: 1, name: "Nguyễn Hoàng Tùng", bcoins: 3501, badge: "🥇", level: "L2" },
+        { rank: 2, name: "Nguyễn Hoàng Anh", bcoins: 2920, badge: "🥈", level: "L4" },
+        { rank: 3, name: "Lương Thu Hà", bcoins: 1850, badge: "🥉", level: "L3" },
+        { rank: 4, name: "Lương Đức Quang", bcoins: 1200, badge: "4", level: "L3" }
+      ];
+
+      container.innerHTML = "";
+      list.forEach(item => {
+        const row = `
+          <div class="flex items-center justify-between p-2.5 ${item.rank === 1 ? 'bg-booklab-yellowPastel' : 'bg-gray-50'} rounded-xl border border-navy">
+            <div class="flex items-center space-x-2.5">
+              <span class="text-base font-bold w-6 text-center">${item.badge}</span>
+              <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${item.name}" class="w-8 h-8 rounded-full border border-navy">
+              <div>
+                <h5 class="font-bold text-xs text-navy">${item.name}</h5>
+                <span class="text-[9px] font-bold text-gray-500">${item.level}</span>
+              </div>
+            </div>
+            <span class="font-display font-bold text-xs text-booklab-yellowDark">${item.bcoins.toLocaleString()} Bcoins</span>
+          </div>
+        `;
+        container.innerHTML += row;
+      });
+    }
+
+    // 9. RENDER GIFT CATALOG (TAB 5)
+    function renderGiftCatalog() {
+      const container = document.getElementById("giftCatalog");
+      container.innerHTML = "";
+
+      appData.gifts.forEach(g => {
+        const canRedeem = appData.user.Total_Bcoins >= g.Bcoins;
+        const card = `
+          <div class="bg-white sketch-border p-3 text-center space-y-1.5 shadow-sketchSm ${!canRedeem ? 'opacity-70 grayscale' : ''}">
+            <div class="w-12 h-12 bg-booklab-pinkPastel rounded-2xl mx-auto flex items-center justify-center text-xl sketch-border">
+              🎁
+            </div>
+            <h5 class="font-bold text-xs text-navy line-clamp-1">${g.Title}</h5>
+            <p class="text-xs font-bold text-booklab-yellowDark">${g.Bcoins} Bcoins</p>
+            
+            <button onclick="redeemGift('${g.Title}', ${g.Bcoins})" ${!canRedeem ? 'disabled' : ''} class="w-full text-[10px] font-bold py-1 px-2 rounded-lg ${canRedeem ? 'bg-booklab-yellowPastel sketch-btn text-navy' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}">
+              ${g.Status === 'claimed' ? 'Đã đổi ✓' : (canRedeem ? 'Đổi Quà Ngay' : 'Thiếu điểm')}
+            </button>
+          </div>
+        `;
+        container.innerHTML += card;
+      });
+    }
+
+    function redeemGift(title, bcoins) {
+      if (confirm(`Bạn có chắc chắn muốn dùng ${bcoins} Bcoins để đổi phần quà '${title}' tại Trạm không?`)) {
+        appData.user.Total_Bcoins -= bcoins;
+        renderHeaderAndTicketInfo();
+        renderGiftCatalog();
+        alert(`Đổi quà '${title}' thành công! Vui lòng đọc mã độc giả cho Mentor tại Trạm để nhận quà.`);
+      }
+    }
+
+    // 10. CHECK-IN HISTORY (TAB 2)
+    function renderCheckinHistory() {
+      const container = document.getElementById("checkinHistory");
+      const logs = [
+        "2026-11-10 03:26 - Trạm Đặng Xá (Reading Tour)",
+        "2026-11-08 14:15 - Trạm Đặng Xá (Reading Tour)",
+        "2026-11-05 09:30 - Trạm Đặng Xá (Reading Tour)"
+      ];
+      container.innerHTML = "";
+      logs.forEach(log => {
+        container.innerHTML += `<div class="p-2 bg-gray-50 rounded-lg border border-navy/20 font-mono text-[11px] text-navy">📍 ${log}</div>`;
+      });
+    }
+
+    // 11. GỌI GET API TỪ GOOGLE APPS SCRIPT
+    function fetchSheetData() {
+      const icon = document.getElementById("refreshIcon");
+      if (icon) icon.classList.add("fa-spin");
+
+      fetch(GAS_API_URL)
+        .then(res => res.json())
+        .then(res => {
+          if (res.status === "success" && res.data) {
+            console.log("Đã tải dữ liệu Google Sheet:", res.data);
+            // Nếu có sheet User -> Cập nhật thông tin độc giả đầu tiên
+            if (res.data.User && res.data.User.length > 0) {
+              const u = res.data.User[0];
+              appData.user.Full_Name = u.Full_Name || appData.user.Full_Name;
+              appData.user.Total_Bcoins = parseInt(u.Total_Bcoins) || appData.user.Total_Bcoins;
+              appData.user.Current_Level = u.Current_Level || appData.user.Current_Level;
+              appData.user.Level_Name = u.Level_Name || appData.user.Level_Name;
+              renderHeaderAndTicketInfo();
+            }
+          }
+        })
+        .catch(err => {
+          console.log("Dùng dữ liệu local fallback do không kết nối được GAS:", err);
+        })
+        .finally(() => {
+          if (icon) icon.classList.remove("fa-spin");
+        });
+    }
+
+    // MODAL PROFILE & QR ACTIONS
+    function openProfileModal() {
+      document.getElementById("profileModal").classList.remove("hidden");
+    }
+    function closeProfileModal() {
+      document.getElementById("profileModal").classList.add("hidden");
+    }
+    function openQRModal() {
+      switchTab('tab2');
+    }
+    function printPassportQR() {
+      window.print();
+    }
+  </script>
+
+</body>
+</html>
